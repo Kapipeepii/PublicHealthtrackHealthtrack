@@ -1,0 +1,26 @@
+# Netlify _headers file
+# ------------------------------------------------------------------
+# Place this file (named exactly "_headers", no extension) in the same
+# publish folder as index.html. Netlify reads it automatically on deploy —
+# no netlify.toml or build step needed.
+#
+# Forces browsers (and Netlify's own CDN) to always revalidate these files
+# with the origin server before trusting any cached copy, instead of
+# serving a stale version silently. Without this, the browser's normal
+# HTTP cache can keep serving an old sw.js/index.html even though the
+# service worker's own cache logic is correctly set to network-first —
+# the request never reaches the network layer at all if the HTTP cache
+# intercepts it first. This was almost certainly why "redeployed and
+# nothing changed" kept happening.
+
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
+/manifest.json
+  Cache-Control: no-cache, must-revalidate
+
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+
+/
+  Cache-Control: no-cache, must-revalidate
