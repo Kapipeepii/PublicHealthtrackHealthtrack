@@ -1,0 +1,9 @@
+{
+  "name": "healthtrack",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "web-push": "^3.6.7",
+    "@netlify/blobs": "11.0.0"
+  }
+}
