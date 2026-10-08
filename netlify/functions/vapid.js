@@ -60,18 +60,23 @@ export default async (req) => {
     const keys = webpush.generateVAPIDKeys();
     return page('สร้าง VAPID key', `
       <h1>คีย์ Push ของเว็บนี้ (สร้างใหม่ทุกครั้งที่เปิดหน้านี้)</h1>
-      <p>แตะปุ่ม <b>คัดลอก</b> ใต้แต่ละช่อง แล้วสลับไปวางในหน้า Netlify → Project configuration → Environment variables ตามชื่อที่ระบุ (ทำทีละค่า ห้ามรีเฟรชหน้านี้ระหว่างทำ)</p>
-      <label>1) ชื่อ: <code>VAPID_PUBLIC_KEY</code></label>
-      <textarea id="k1" readonly onclick="this.select()">${keys.publicKey}</textarea>
-      <button type="button" class="copy" onclick="htCopy('k1',this)">คัดลอกค่าข้อ 1</button>
-      <label>2) ชื่อ: <code>VAPID_PRIVATE_KEY</code></label>
-      <textarea id="k2" readonly onclick="this.select()">${keys.privateKey}</textarea>
-      <button type="button" class="copy" onclick="htCopy('k2',this)">คัดลอกค่าข้อ 2</button>
-      <label>3) ชื่อ: <code>VAPID_SUBJECT</code></label>
-      <p style="margin:4px 0">พิมพ์อีเมลจริงของคุณ แล้วกดคัดลอก ระบบจะเติม <code>mailto:</code> ให้เอง</p>
+      <p>ทำ 3 ขั้นสั้นๆ: (1) พิมพ์อีเมล (2) กด <b>คัดลอกทั้ง 3 ค่า</b> (3) ไปวางใน Netlify ครั้งเดียว (Project configuration → Environment variables → Add a variable → Import from a .env file) ห้ามรีเฟรชหน้านี้ระหว่างทำ</p>
+      <label>1) อีเมลของคุณ (ใช้เป็น <code>VAPID_SUBJECT</code> ระบบเติม <code>mailto:</code> ให้เอง)</label>
       <input id="em" type="email" inputmode="email" autocomplete="email" placeholder="you@gmail.com">
-      <button type="button" class="copy" onclick="htCopyMail(this)">คัดลอกค่าข้อ 3</button>
-      <div class="warn"><b>ห้ามส่งหรือโพสต์คีย์ข้อ 2 ให้ใคร</b> และต้องใช้คีย์ข้อ 1 กับ 2 จาก "การเปิดหน้านี้ครั้งเดียวกัน" ถ้ารีเฟรชหน้า จะได้คีย์ชุดใหม่ ต้องเปลี่ยนทั้งสองค่าตาม หลังบันทึกแล้วต้องสั่ง Deploy ใหม่ 1 ครั้ง</div>
+      <label>2) คัดลอกค่าทั้งหมดในครั้งเดียว</label>
+      <button type="button" class="copy" onclick="htCopyAll(this)">คัดลอกทั้ง 3 ค่า</button>
+      <details style="margin-top:18px">
+        <summary>ถ้าวางรวมไม่ได้ คัดลอกทีละค่า</summary>
+        <label>ชื่อ: <code>VAPID_PUBLIC_KEY</code></label>
+        <textarea id="k1" readonly onclick="this.select()">${keys.publicKey}</textarea>
+        <button type="button" class="copy" onclick="htCopy('k1',this)">คัดลอกค่านี้</button>
+        <label>ชื่อ: <code>VAPID_PRIVATE_KEY</code></label>
+        <textarea id="k2" readonly onclick="this.select()">${keys.privateKey}</textarea>
+        <button type="button" class="copy" onclick="htCopy('k2',this)">คัดลอกค่านี้</button>
+        <label>ชื่อ: <code>VAPID_SUBJECT</code></label>
+        <button type="button" class="copy" onclick="htCopyMail(this)">คัดลอก mailto: จากอีเมลด้านบน</button>
+      </details>
+      <div class="warn"><b>ห้ามส่งหรือโพสต์ค่า <code>VAPID_PRIVATE_KEY</code> ให้ใคร</b> และต้องใช้ค่าจาก "การเปิดหน้านี้ครั้งเดียวกัน" ถ้ารีเฟรชหน้า จะได้คีย์ชุดใหม่ ต้องเปลี่ยนทั้งสองค่าตาม หลังบันทึกแล้วต้องสั่ง Deploy ใหม่ 1 ครั้ง</div>
       <script>
       function htDone(btn){var t=btn.textContent;btn.textContent='คัดลอกแล้ว ✓';btn.classList.add('done');setTimeout(function(){btn.textContent=t;btn.classList.remove('done');},2000);}
       function htCopyText(text,btn,srcEl){
@@ -88,10 +93,17 @@ export default async (req) => {
         if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(function(){htDone(btn);},fallback);}else{fallback();}
       }
       function htCopy(id,btn){var el=document.getElementById(id);htCopyText(el.value,btn,el);}
-      function htCopyMail(btn){
+      function htCopyMail(btn){var v=htEmail();if(!v)return;htCopyText('mailto:'+v,btn,null);}
+      function htEmail(){
         var v=document.getElementById('em').value.trim();
-        if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v)){alert('กรุณาพิมพ์อีเมลให้ถูกต้องก่อน');return;}
-        htCopyText('mailto:'+v,btn,null);
+        if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(v)){alert('กรุณาพิมพ์อีเมลให้ถูกต้องก่อน');return null;}
+        return v;
+      }
+      function htCopyAll(btn){
+        var v=htEmail();if(!v)return;
+        var nl=String.fromCharCode(10);
+        var text='VAPID_PUBLIC_KEY='+document.getElementById('k1').value+nl+'VAPID_PRIVATE_KEY='+document.getElementById('k2').value+nl+'VAPID_SUBJECT=mailto:'+v;
+        htCopyText(text,btn,null);
       }
       </script>`);
   }
